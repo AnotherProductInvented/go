@@ -38,7 +38,8 @@
       z-index: 5;
       padding: 20px;
       box-sizing: border-box;
-      overflow: auto;
+      max-height: 90vh;
+      overflow-y: auto;
     }
     .instructionPage {
       display: none;
@@ -76,7 +77,7 @@
       max-width: 100px;
       z-index: 2000;
     }
-    /* Fancy illegal move message */
+    /* Fancy illegal move message (non-popup) */
     #illegalMessage {
       position: absolute;
       top: 50%;
@@ -93,12 +94,13 @@
   </style>
 </head>
 <body>
+  <!-- Main Title -->
   <h1>Another Product Invented<br>Go</h1>
+  
   <div id="gameContainer">
     <!-- MENU SCREEN -->
     <div id="menuScreen" class="overlayScreen" style="display:flex;">
-      <h2>Another Product Invented</h2>
-      <h2>Go</h2>
+      <h2>Another Product Invented<br>Go</h2>
       <button id="newGameBtn">New Game</button>
       <button id="instructionsBtn">Instructions</button>
     </div>
@@ -201,15 +203,18 @@
     let ctx = canvas.getContext("2d");
     
     // Game state variables
-    let board = []; // 2D array representing the board (null, 'b', or 'w')
-    let currentPlayer = 'b'; // 'b' (Black) or 'w' (White)
-    let prevBoardState = ""; // used for ko rule (stores string of previous board)
+    let board = []; // 2D array (null, 'b', or 'w')
+    let currentPlayer = 'b'; // 'b' or 'w'
+    let prevBoardState = ""; // for ko rule
     let passCount = 0;
     let blackCaptured = 0, whiteCaptured = 0;
     let gameState = "menu"; // "menu", "color_choice", "difficulty_choice", "playing", "instructions", "game_over"
-    let playerColor = null; // player chosen color ('b' or 'w')
-    let difficulty = "easy"; // "easy", "medium", or "hard"
+    let playerColor = null; // chosen by player: 'b' or 'w'
+    let difficulty = "easy"; // "easy", "medium", "hard"
     let aiThinking = false;
+    
+    // A lock to prevent rapid multiple moves.
+    let moveLock = false;
     
     // UI Elements
     const menuScreen = document.getElementById("menuScreen");
@@ -239,24 +244,20 @@
       }
     }
     
-    // Return a deep copy of the board
     function cloneBoard(bd) {
       return bd.map(row => row.slice());
     }
     
-    // Convert board array to a string for ko checking.
     function boardToString(bd) {
       return bd.map(row => row.map(cell => cell ? cell : ".").join("")).join("\n");
     }
     
-    // Get pixel coordinates (x,y) of an intersection.
     function getIntersectionCoordinates(row, col) {
       let x = MARGIN + col * CELL_SIZE;
       let y = MARGIN + row * CELL_SIZE;
       return { x, y };
     }
     
-    // Get neighbors (up, down, left, right).
     function getNeighbors(row, col) {
       let neighbors = [];
       if (row > 0) neighbors.push({ r: row - 1, c: col });
@@ -266,7 +267,6 @@
       return neighbors;
     }
     
-    // Get the group (connected stones) and its liberties.
     function getGroup(bd, row, col, visited = {}) {
       let color = bd[row][col];
       let group = [];
@@ -292,7 +292,7 @@
     /*******************************
      * Move Simulation & Rule Checks
      *******************************/
-    // Returns an object with legal:true/false, and reason if false.
+    // Returns an object with legal:true/false and a reason if false.
     function simulateMove(bd, row, col, color) {
       if (bd[row][col] !== null) return { legal: false, reason: "occupied" };
       let newBd = cloneBoard(bd);
@@ -300,7 +300,7 @@
       let captured = 0;
       let opponent = (color === 'b') ? 'w' : 'b';
     
-      // Check opponent groups for capture.
+      // Check for opponent captures.
       for (let n of getNeighbors(row, col)) {
         if (newBd[n.r][n.c] === opponent) {
           let { group, liberties } = getGroup(newBd, n.r, n.c);
@@ -310,7 +310,7 @@
           }
         }
       }
-      // Check the newly placed stone's group.
+      // Check the new stone's group.
       let { group, liberties } = getGroup(newBd, row, col);
       if (liberties.size === 0 && captured === 0) return { legal: false, reason: "suicide" };
     
@@ -322,17 +322,20 @@
     }
     
     function attemptMove(row, col) {
+      if (moveLock) return;
+      moveLock = true;
       let result = simulateMove(board, row, col, currentPlayer);
       if (!result.legal) {
-        if(result.reason === "ko") {
+        if (result.reason === "ko") {
           showIllegalMessage("Ko rule violation!");
-        } else if(result.reason === "suicide") {
+        } else if (result.reason === "suicide") {
           showIllegalMessage("Suicide move not allowed!");
         }
         console.warn("Illegal move at", row, col, result.reason);
+        moveLock = false;
         return;
       }
-      // Save current board state for ko.
+      // Save board state for ko.
       prevBoardState = boardToString(board);
       board = result.newBoard;
       if (currentPlayer === 'b') {
@@ -342,6 +345,7 @@
       }
       passCount = 0;
       swapPlayer();
+      moveLock = false;
     }
     
     function swapPlayer() {
@@ -368,23 +372,39 @@
       if (moves.length === 0) return null;
       if (difficulty === "easy") {
         return moves[Math.floor(Math.random() * moves.length)];
-      } else {
-        // For medium/hard, choose move with maximum capture.
+      } else if (difficulty === "medium") {
+        // Choose move with maximum captured stones.
         moves.sort((a, b) => b.captured - a.captured);
         return moves[0];
+      } else if (difficulty === "hard") {
+        // Evaluate each move: score = captured + liberties of new group.
+        let bestScore = -Infinity;
+        let bestMove = moves[0];
+        for (let move of moves) {
+          let sim = simulateMove(board, move.r, move.c, currentPlayer);
+          if (sim.legal) {
+            let { liberties } = getGroup(sim.newBoard, move.r, move.c);
+            let score = move.captured + liberties.size;
+            if (score > bestScore) {
+              bestScore = score;
+              bestMove = move;
+            }
+          }
+        }
+        return bestMove;
       }
     }
     
     function aiTurnIfNeeded() {
       if (playerColor === currentPlayer) return; // player's turn
-      if (aiThinking) return;
+      if (aiThinking || moveLock) return;
       aiThinking = true;
       setTimeout(() => {
         let move = getAIMove();
         if (move) {
           attemptMove(move.r, move.c);
         } else {
-          // No legal moves for AI: pass.
+          // If no legal moves, AI passes.
           passCount++;
           if (passCount >= 2) {
             endGame();
@@ -403,20 +423,16 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = "#000";
       ctx.lineWidth = 1;
-      // Draw grid
       for (let i = 0; i < BOARD_SIZE; i++) {
-        // Vertical
         ctx.beginPath();
         ctx.moveTo(MARGIN + i * CELL_SIZE, MARGIN);
         ctx.lineTo(MARGIN + i * CELL_SIZE, MARGIN + (BOARD_SIZE - 1) * CELL_SIZE);
         ctx.stroke();
-        // Horizontal
         ctx.beginPath();
         ctx.moveTo(MARGIN, MARGIN + i * CELL_SIZE);
         ctx.lineTo(MARGIN + (BOARD_SIZE - 1) * CELL_SIZE, MARGIN + i * CELL_SIZE);
         ctx.stroke();
       }
-      // Draw star points for 19x19 board.
       const starPoints = [3, 9, 15];
       ctx.fillStyle = "#000";
       for (let i of starPoints) {
@@ -512,7 +528,7 @@
      * Input Handling
      *******************************/
     canvas.addEventListener("mousedown", (e) => {
-      if (gameState !== "playing") return;
+      if (gameState !== "playing" || moveLock) return;
       let rect = canvas.getBoundingClientRect();
       let mx = e.clientX - rect.left;
       let my = e.clientY - rect.top;
@@ -526,7 +542,7 @@
     });
     
     document.getElementById("passBtn").addEventListener("click", () => {
-      if (gameState !== "playing") return;
+      if (gameState !== "playing" || moveLock) return;
       passCount++;
       if (passCount >= 2) {
         endGame();
@@ -654,10 +670,8 @@
       requestAnimationFrame(mainLoop);
     }
     
-    // Start the animation loop.
     requestAnimationFrame(mainLoop);
     
-    // Initialize to menu.
     showMenu();
   </script>
 </body>
