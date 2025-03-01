@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Another Product Invented<br>Go</title>
   <style>
+    /* Basic layout */
     body {
       margin: 0;
       padding: 0;
@@ -15,20 +16,20 @@
       position: relative;
       min-height: 100vh;
     }
-    /* Main header */
+    /* Header */
     h1 {
       margin: 1rem 0 0.5rem;
       text-align: center;
       line-height: 1.2;
     }
-    /* Game container with scroll support if needed */
+    /* Game container with scrolling support */
     #gameContainer {
       position: relative;
       width: 100%;
       max-width: 700px;
       overflow-y: auto;
       max-height: 90vh;
-      padding-bottom: 80px;  /* extra space to ensure full board is visible */
+      padding-bottom: 80px;  /* extra space for board & bottom bar */
       margin-bottom: 50px;
     }
     /* Live Scoreboard */
@@ -65,7 +66,7 @@
       overflow-y: auto;
       width: 100%;
     }
-    /* Instruction pages (paginated) */
+    /* Paginated instruction pages */
     .instructionPage {
       display: none;
       max-width: 600px;
@@ -81,7 +82,7 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    /* Bottom bar visible only during play */
+    /* Bottom bar (only during play) */
     #bottomBar {
       position: absolute;
       bottom: 0;
@@ -104,7 +105,7 @@
       max-width: 100px;
       z-index: 2000;
     }
-    /* Illegal move message */
+    /* Red illegal move message */
     #illegalMessage {
       position: absolute;
       top: 50%;
@@ -118,13 +119,13 @@
       display: none;
       z-index: 3000;
     }
-    /* Status message for opponent pass */
+    /* Blue status message for opponent pass */
     #statusMessage {
       position: absolute;
       top: 60%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 255, 0.8);
+      background: rgba(0,0,255,0.8);
       color: #fff;
       padding: 10px 20px;
       border-radius: 8px;
@@ -135,11 +136,11 @@
   </style>
 </head>
 <body>
-  <!-- Main header: "Another Product Invented" then "Go" -->
+  <!-- Header: "Another Product Invented" then "Go" -->
   <h1>Another Product Invented<br>Go</h1>
   
   <div id="gameContainer">
-    <!-- Live Scoreboard: shows running score from start (White starts at 7) -->
+    <!-- Live Scoreboard -->
     <div id="scoreBoard"></div>
     
     <!-- MENU SCREEN -->
@@ -230,7 +231,7 @@
     <div id="statusMessage"></div>
   </div>
   
-  <!-- Logo (ensure logo.png is present) -->
+  <!-- Logo -->
   <img id="logo" src="logo.png" alt="Logo">
   
   <script>
@@ -477,7 +478,7 @@
       if (aiThinking || moveLock) return;
       aiThinking = true;
       setTimeout(() => {
-        // Re-check: if human moved during delay, cancel AI move.
+        // Re-check if human moved during delay.
         if (playerColor === currentPlayer) {
           aiThinking = false;
           return;
@@ -486,7 +487,7 @@
         if (move) {
           attemptMove(move.r, move.c);
         } else {
-          // If AI has no legal move, it passes.
+          // AI passes if no legal move.
           showStatusMessage("Opponent passed!");
           passCount++;
           if (passCount >= 2) {
@@ -778,7 +779,7 @@
       updateScoreBoard();
       if (gameState === "playing") {
         drawBoard();
-        // Only let AI move if it's not the human's turn
+        // Only let AI move if it's not the human's turn.
         if (playerColor !== currentPlayer) {
           aiTurnIfNeeded();
         }
