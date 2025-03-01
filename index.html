@@ -22,7 +22,7 @@
       text-align: center;
       line-height: 1.2;
     }
-    /* Live Scoreboard placed outside the board */
+    /* Live Scoreboard placed above the board */
     #scoreBoard {
       background: rgba(255,255,255,0.8);
       padding: 5px 10px;
@@ -117,7 +117,7 @@
       display: none;
       z-index: 3000;
     }
-    /* Blue status message for opponent passes */
+    /* Blue status message for opponent pass (or pass rejection) */
     #statusMessage {
       position: absolute;
       top: 60%;
@@ -134,10 +134,10 @@
   </style>
 </head>
 <body>
-  <!-- Header: "Another Product Invented" then "Go" -->
+  <!-- Header -->
   <h1>Another Product Invented<br>Go</h1>
   
-  <!-- Live Scoreboard placed above the board -->
+  <!-- Live Scoreboard -->
   <div id="scoreBoard"></div>
   
   <div id="gameContainer">
@@ -229,7 +229,7 @@
     <div id="statusMessage"></div>
   </div>
   
-  <!-- Logo (ensure logo.png exists in your project folder) -->
+  <!-- Logo -->
   <img id="logo" src="logo.png" alt="Logo">
   
   <script>
@@ -257,7 +257,7 @@
     let difficulty = "easy"; // "easy", "medium", "hard"
     let aiThinking = false;
     let moveLock = false;
-    let gameEnded = false; // Prevent further moves after game over
+    let gameEnded = false; // Lock further moves once game ends
     
     const menuScreen = document.getElementById("menuScreen");
     const instructionsScreen = document.getElementById("instructionsScreen");
@@ -625,6 +625,19 @@
     canvas.addEventListener("mousedown", (e) => {
       // Process click only if it's the human's turn and game hasn't ended.
       if (gameState !== "playing" || moveLock || playerColor !== currentPlayer || gameEnded) return;
+      
+      // Extra rule: if only one empty intersection remains, do not allow a move.
+      let emptyCount = 0;
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          if (board[r][c] === null) emptyCount++;
+        }
+      }
+      if (emptyCount === 1) {
+        showStatusMessage("Only one intersection remains. You must pass!");
+        return;
+      }
+      
       let rect = canvas.getBoundingClientRect();
       let mx = e.clientX - rect.left;
       let my = e.clientY - rect.top;
@@ -779,7 +792,6 @@
       updateScoreBoard();
       if (gameState === "playing") {
         drawBoard();
-        // Only let AI move if it's not the human's turn.
         if (playerColor !== currentPlayer) {
           aiTurnIfNeeded();
         }
