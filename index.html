@@ -22,7 +22,7 @@
       text-align: center;
       line-height: 1.2;
     }
-    /* Place the live scoreboard outside the board */
+    /* Live Scoreboard placed outside the board */
     #scoreBoard {
       background: rgba(255,255,255,0.8);
       padding: 5px 10px;
@@ -117,7 +117,7 @@
       display: none;
       z-index: 3000;
     }
-    /* Blue status message for opponent passes */
+    /* Blue status message for opponent pass */
     #statusMessage {
       position: absolute;
       top: 60%;
@@ -137,7 +137,7 @@
   <!-- Header -->
   <h1>Another Product Invented<br>Go</h1>
   
-  <!-- Live Scoreboard placed outside the board -->
+  <!-- Live Scoreboard placed above the board -->
   <div id="scoreBoard"></div>
   
   <div id="gameContainer">
@@ -253,10 +253,11 @@
     let passCount = 0;
     let blackCaptured = 0, whiteCaptured = 0;
     let gameState = "menu"; // "menu", "color_choice", "difficulty_choice", "playing", "instructions", "game_over"
-    let playerColor = null;  // player's chosen color: 'b' or 'w'
+    let playerColor = null;  // 'b' or 'w'
     let difficulty = "easy"; // "easy", "medium", "hard"
     let aiThinking = false;
     let moveLock = false;
+    let gameEnded = false; // New flag to lock further moves after game ends
     
     const menuScreen = document.getElementById("menuScreen");
     const instructionsScreen = document.getElementById("instructionsScreen");
@@ -323,6 +324,7 @@
         }
         board.push(row);
       }
+      gameEnded = false;
     }
     
     function cloneBoard(bd) {
@@ -400,7 +402,7 @@
     }
     
     function attemptMove(row, col) {
-      if (moveLock) return;
+      if (moveLock || gameEnded) return;
       moveLock = true;
       let result = simulateMove(board, row, col, currentPlayer);
       if (!result.legal) {
@@ -472,11 +474,10 @@
     
     function aiTurnIfNeeded() {
       // Only run if it's AI's turn.
-      if (playerColor === currentPlayer) return;
+      if (playerColor === currentPlayer || gameEnded) return;
       if (aiThinking || moveLock) return;
       aiThinking = true;
       setTimeout(() => {
-        // Re-check if human moved during delay.
         if (playerColor === currentPlayer) {
           aiThinking = false;
           return;
@@ -485,7 +486,6 @@
         if (move) {
           attemptMove(move.r, move.c);
         } else {
-          // If AI has no legal move, it passes.
           showStatusMessage("Opponent passed!");
           passCount++;
           if (passCount >= 2) {
@@ -602,6 +602,7 @@
                          Winner: ${blackScore === whiteScore ? "Tie" : (blackScore > whiteScore ? "Black" : "White")}`;
       gameOverText.innerHTML = resultText;
       gameState = "game_over";
+      gameEnded = true;
       showGameOver();
     }
     
@@ -622,8 +623,8 @@
      * Input Handling
      *******************************/
     canvas.addEventListener("mousedown", (e) => {
-      // Process click only if it's the human's turn
-      if (gameState !== "playing" || moveLock || playerColor !== currentPlayer) return;
+      // Process click only if it's the human's turn and the game hasn't ended.
+      if (gameState !== "playing" || moveLock || playerColor !== currentPlayer || gameEnded) return;
       let rect = canvas.getBoundingClientRect();
       let mx = e.clientX - rect.left;
       let my = e.clientY - rect.top;
@@ -637,8 +638,8 @@
     });
     
     document.getElementById("passBtn").addEventListener("click", () => {
-      // Only allow pass if it's the human's turn
-      if (gameState !== "playing" || moveLock || playerColor !== currentPlayer) return;
+      // Only allow pass if it's the human's turn and game isn't ended.
+      if (gameState !== "playing" || moveLock || playerColor !== currentPlayer || gameEnded) return;
       passCount++;
       if (passCount >= 2) {
         endGame();
@@ -728,6 +729,7 @@
       whiteCaptured = 0;
       prevBoardState = boardToString(board);
       gameState = "playing";
+      gameEnded = false;
       updateBottomBarVisibility();
       updateScoreBoard();
     }
@@ -737,13 +739,13 @@
      *******************************/
     document.getElementById("newGameBtn").onclick = showColorChoice;
     document.getElementById("instructionsBtn").onclick = showInstructions;
-    if (document.getElementById("whiteSideBtn")) {
+    if(document.getElementById("whiteSideBtn")) {
       document.getElementById("whiteSideBtn").onclick = () => {
         playerColor = 'w';
         showDifficultyChoice();
       };
     }
-    if (document.getElementById("blackSideBtn")) {
+    if(document.getElementById("blackSideBtn")) {
       document.getElementById("blackSideBtn").onclick = () => {
         playerColor = 'b';
         showDifficultyChoice();
