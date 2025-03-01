@@ -412,7 +412,7 @@
       if (aiThinking || moveLock) return;
       aiThinking = true;
       setTimeout(() => {
-        // Re-check that it's still AI's turn
+        // Re-check: if human made a move during delay, cancel AI move.
         if (playerColor === currentPlayer) {
           aiThinking = false;
           return;
@@ -559,7 +559,8 @@
     });
     
     document.getElementById("passBtn").addEventListener("click", () => {
-      if (gameState !== "playing" || moveLock) return;
+      // Only allow pass if it's the player's turn
+      if (gameState !== "playing" || moveLock || playerColor !== currentPlayer) return;
       passCount++;
       if (passCount >= 2) {
         endGame();
@@ -691,6 +692,7 @@
       updateBottomBarVisibility();
       if (gameState === "playing") {
         drawBoard();
+        // Only let AI move if it's not the player's turn
         if (playerColor !== currentPlayer) {
           aiTurnIfNeeded();
         }
