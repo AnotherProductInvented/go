@@ -16,13 +16,13 @@
       position: relative;
       min-height: 100vh;
     }
-    /* Header: one instance only */
+    /* Header */
     h1 {
       margin: 1rem 0 0.5rem;
       text-align: center;
       line-height: 1.2;
     }
-    /* Live Scoreboard placed outside the board */
+    /* Live Scoreboard (moved outside the board) */
     #scoreBoard {
       background: rgba(255,255,255,0.8);
       padding: 5px 10px;
@@ -80,7 +80,7 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    /* Bottom bar: shown only during play */
+    /* Bottom bar (visible during play) */
     #bottomBar {
       position: absolute;
       bottom: 0;
@@ -117,7 +117,7 @@
       display: none;
       z-index: 3000;
     }
-    /* Blue status message for opponent pass */
+    /* Blue status message (for opponent passes) */
     #statusMessage {
       position: absolute;
       top: 60%;
@@ -137,7 +137,7 @@
   <!-- Header -->
   <h1>Another Product Invented<br>Go</h1>
   
-  <!-- Live Scoreboard placed above the board -->
+  <!-- Live Scoreboard (placed above the board) -->
   <div id="scoreBoard"></div>
   
   <div id="gameContainer">
@@ -257,7 +257,7 @@
     let difficulty = "easy"; // "easy", "medium", "hard"
     let aiThinking = false;
     let moveLock = false;
-    let gameEnded = false; // New flag to lock further moves after game ends
+    let gameEnded = false; // Lock further moves once game ends
     
     const menuScreen = document.getElementById("menuScreen");
     const instructionsScreen = document.getElementById("instructionsScreen");
@@ -411,6 +411,8 @@
         } else if (result.reason === "suicide") {
           showIllegalMessage("Suicide move not allowed!");
         }
+        // Reset pass count so illegal attempts don't force a game end.
+        passCount = 0;
         console.warn("Illegal move at", row, col, result.reason);
         moveLock = false;
         return;
@@ -623,7 +625,7 @@
      * Input Handling
      *******************************/
     canvas.addEventListener("mousedown", (e) => {
-      // Process click only if it's the human's turn and the game hasn't ended.
+      // Process click only if it's the human's turn and game hasn't ended.
       if (gameState !== "playing" || moveLock || playerColor !== currentPlayer || gameEnded) return;
       let rect = canvas.getBoundingClientRect();
       let mx = e.clientX - rect.left;
@@ -739,13 +741,13 @@
      *******************************/
     document.getElementById("newGameBtn").onclick = showColorChoice;
     document.getElementById("instructionsBtn").onclick = showInstructions;
-    if(document.getElementById("whiteSideBtn")) {
+    if (document.getElementById("whiteSideBtn")) {
       document.getElementById("whiteSideBtn").onclick = () => {
         playerColor = 'w';
         showDifficultyChoice();
       };
     }
-    if(document.getElementById("blackSideBtn")) {
+    if (document.getElementById("blackSideBtn")) {
       document.getElementById("blackSideBtn").onclick = () => {
         playerColor = 'b';
         showDifficultyChoice();
@@ -779,7 +781,7 @@
       updateScoreBoard();
       if (gameState === "playing") {
         drawBoard();
-        // Only let AI move if it's not the human's turn
+        // Only let AI move if it's not the human's turn.
         if (playerColor !== currentPlayer) {
           aiTurnIfNeeded();
         }
