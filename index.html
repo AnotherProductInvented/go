@@ -14,7 +14,7 @@
       align-items: center;
       position: relative;
     }
-    /* Main header only once */
+    /* Main header (only once) */
     h1 {
       margin: 1rem 0 0.5rem;
       text-align: center;
@@ -28,9 +28,9 @@
     /* Canvas board */
     canvas {
       display: block;
-      background: #dcb67c; /* wooden board color */
+      background: #dcb67c;
     }
-    /* Overlays for menus/instructions etc. */
+    /* Overlays for menus/instructions */
     .overlayScreen {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -47,7 +47,7 @@
       overflow-y: auto;
       width: 100%;
     }
-    /* Instruction pages – paginated */
+    /* Instruction pages (paginated) */
     .instructionPage {
       display: none;
       max-width: 600px;
@@ -63,7 +63,7 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    /* Bottom bar for pass button and turn indicator */
+    /* Bottom bar (only visible during play) */
     #bottomBar {
       position: absolute;
       bottom: 0;
@@ -71,14 +71,14 @@
       width: 100%;
       height: 40px;
       background: rgba(255,255,255,0.9);
-      display: flex;
+      display: none;
       align-items: center;
       padding-left: 10px;
       box-sizing: border-box;
       z-index: 2;
       border-top: 1px solid #ccc;
     }
-    /* Logo in the lower-right corner */
+    /* Logo */
     #logo {
       position: fixed;
       bottom: 10px;
@@ -86,7 +86,7 @@
       max-width: 100px;
       z-index: 2000;
     }
-    /* Fancy illegal move message (centered, no pop-up window) */
+    /* Illegal move message */
     #illegalMessage {
       position: absolute;
       top: 50%;
@@ -103,12 +103,12 @@
   </style>
 </head>
 <body>
-  <!-- Main title appears only once -->
+  <!-- Main header -->
   <h1>Another Product Invented<br>Go</h1>
   
   <div id="gameContainer">
-    <!-- MENU SCREEN (no duplicate title here) -->
-    <div id="menuScreen" class="overlayScreen" style="display:flex;">
+    <!-- MENU SCREEN (no extra UI elements here) -->
+    <div id="menuScreen" class="overlayScreen" style="display: flex;">
       <button id="newGameBtn">New Game</button>
       <button id="instructionsBtn">Instructions</button>
     </div>
@@ -148,7 +148,7 @@
           <ul>
             <li>Place one stone per turn on an empty intersection.</li>
             <li>Once placed, stones do not move.</li>
-            <li>Connected stones (horizontally/vertically) need at least one adjacent empty intersection ("liberty").</li>
+            <li>Connected stones (horizontally/vertically) must have at least one adjacent empty intersection ("liberty").</li>
             <li>If a group loses all liberties, it is captured and removed.</li>
             <li><strong>Ko Rule:</strong> You cannot play a move that recreates the previous board state. A fancy message will appear if attempted.</li>
             <li><strong>Suicide Rule:</strong> You cannot play a move that leaves your stone (or group) with no liberties unless it captures opponent stones. A message will alert you.</li>
@@ -179,20 +179,20 @@
       <p>Press [M] to return to the Main Menu.</p>
     </div>
     
-    <!-- Canvas where the game is drawn -->
+    <!-- Canvas for the game -->
     <canvas id="goCanvas"></canvas>
     
-    <!-- Bottom bar for turn display and pass button -->
+    <!-- Bottom bar (only visible during play) -->
     <div id="bottomBar">
       <span id="turnDisplay">Turn: Black</span>
       <button id="passBtn" style="margin-left:auto; margin-right:10px;">Pass</button>
     </div>
     
-    <!-- Illegal Move Message (fancy overlay) -->
+    <!-- Illegal move message -->
     <div id="illegalMessage"></div>
   </div>
   
-  <!-- Logo image (ensure logo.png exists in your repository) -->
+  <!-- Logo (ensure logo.png exists) -->
   <img id="logo" src="logo.png" alt="Logo">
   
   <script>
@@ -216,11 +216,12 @@
     let passCount = 0;
     let blackCaptured = 0, whiteCaptured = 0;
     let gameState = "menu"; // "menu", "color_choice", "difficulty_choice", "playing", "instructions", "game_over"
-    let playerColor = null;  // player’s chosen color: 'b' or 'w'
+    let playerColor = null;  // player's chosen color: 'b' or 'w'
     let difficulty = "easy"; // "easy", "medium", "hard"
     let aiThinking = false;
     let moveLock = false;
     
+    // UI elements
     const menuScreen = document.getElementById("menuScreen");
     const instructionsScreen = document.getElementById("instructionsScreen");
     const colorScreen = document.getElementById("colorScreen");
@@ -232,6 +233,14 @@
     
     const instructionPages = document.querySelectorAll(".instructionPage");
     let currentInstrPage = 0;
+    
+    /*******************************
+     * Bottom Bar Visibility
+     *******************************/
+    function updateBottomBarVisibility() {
+      const bottomBar = document.getElementById("bottomBar");
+      bottomBar.style.display = (gameState === "playing") ? "flex" : "none";
+    }
     
     /*******************************
      * Board & Utility Functions
@@ -295,7 +304,6 @@
     /*******************************
      * Move Simulation & Rule Checks
      *******************************/
-    // Returns an object { legal: true/false, reason: "ko"/"suicide"/"occupied" if illegal, newBoard, captured }
     function simulateMove(bd, row, col, color) {
       if (bd[row][col] !== null) return { legal: false, reason: "occupied" };
       let newBd = cloneBoard(bd);
@@ -303,7 +311,6 @@
       let captured = 0;
       let opponent = (color === 'b') ? 'w' : 'b';
     
-      // Check for opponent captures.
       for (let n of getNeighbors(row, col)) {
         if (newBd[n.r][n.c] === opponent) {
           let { group, liberties } = getGroup(newBd, n.r, n.c);
@@ -314,7 +321,6 @@
         }
       }
     
-      // Check our newly placed stone.
       let { group, liberties } = getGroup(newBd, row, col);
       if (liberties.size === 0 && captured === 0) return { legal: false, reason: "suicide" };
     
@@ -565,6 +571,7 @@
       hideAllScreens();
       gameState = "menu";
       menuScreen.style.display = "flex";
+      updateBottomBarVisibility();
     }
     
     function showInstructions() {
@@ -573,6 +580,7 @@
       instructionsScreen.style.display = "flex";
       currentInstrPage = 0;
       updateInstructionPage();
+      updateBottomBarVisibility();
     }
     
     function updateInstructionPage() {
@@ -598,17 +606,20 @@
       hideAllScreens();
       gameState = "color_choice";
       colorScreen.style.display = "flex";
+      updateBottomBarVisibility();
     }
     
     function showDifficultyChoice() {
       hideAllScreens();
       gameState = "difficulty_choice";
       difficultyScreen.style.display = "flex";
+      updateBottomBarVisibility();
     }
     
     function showGameOver() {
       hideAllScreens();
       gameOverScreen.style.display = "flex";
+      updateBottomBarVisibility();
     }
     
     function startPlaying() {
@@ -621,6 +632,7 @@
       whiteCaptured = 0;
       prevBoardState = boardToString(board);
       gameState = "playing";
+      updateBottomBarVisibility();
     }
     
     /*******************************
@@ -660,6 +672,7 @@
      * Main Loop
      *******************************/
     function mainLoop() {
+      updateBottomBarVisibility();
       if (gameState === "playing") {
         drawBoard();
         if (playerColor !== currentPlayer) {
@@ -670,8 +683,6 @@
     }
     
     requestAnimationFrame(mainLoop);
-    
-    // Start at the menu.
     showMenu();
   </script>
 </body>
