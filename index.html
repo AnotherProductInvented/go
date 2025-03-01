@@ -14,23 +14,28 @@
       align-items: center;
       position: relative;
     }
+    /* Main header only once */
     h1 {
       margin: 1rem 0 0.5rem;
       text-align: center;
+      line-height: 1.2;
     }
+    /* Container for canvas & overlays */
     #gameContainer {
       position: relative;
       margin-bottom: 50px;
     }
+    /* Canvas board */
     canvas {
       display: block;
       background: #dcb67c; /* wooden board color */
     }
+    /* Overlays for menus/instructions etc. */
     .overlayScreen {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       display: none;
-      background: rgba(255,255,255,0.95);
+      background: rgba(240,240,240,0.95);
       align-items: center;
       justify-content: center;
       flex-direction: column;
@@ -40,7 +45,9 @@
       box-sizing: border-box;
       max-height: 90vh;
       overflow-y: auto;
+      width: 100%;
     }
+    /* Instruction pages – paginated */
     .instructionPage {
       display: none;
       max-width: 600px;
@@ -56,6 +63,7 @@
       padding: 10px 20px;
       cursor: pointer;
     }
+    /* Bottom bar for pass button and turn indicator */
     #bottomBar {
       position: absolute;
       bottom: 0;
@@ -70,6 +78,7 @@
       z-index: 2;
       border-top: 1px solid #ccc;
     }
+    /* Logo in the lower-right corner */
     #logo {
       position: fixed;
       bottom: 10px;
@@ -77,7 +86,7 @@
       max-width: 100px;
       z-index: 2000;
     }
-    /* Fancy illegal move message (non-popup) */
+    /* Fancy illegal move message (centered, no pop-up window) */
     #illegalMessage {
       position: absolute;
       top: 50%;
@@ -94,13 +103,12 @@
   </style>
 </head>
 <body>
-  <!-- Main Title -->
+  <!-- Main title appears only once -->
   <h1>Another Product Invented<br>Go</h1>
   
   <div id="gameContainer">
-    <!-- MENU SCREEN -->
+    <!-- MENU SCREEN (no duplicate title here) -->
     <div id="menuScreen" class="overlayScreen" style="display:flex;">
-      <h2>Another Product Invented<br>Go</h2>
       <button id="newGameBtn">New Game</button>
       <button id="instructionsBtn">Instructions</button>
     </div>
@@ -122,39 +130,39 @@
       <p>You can also press E, M, or H on your keyboard.</p>
     </div>
     
-    <!-- INSTRUCTIONS SCREEN (Paginated) -->
+    <!-- INSTRUCTIONS SCREEN (paginated) -->
     <div id="instructionsScreen" class="overlayScreen">
       <div id="instructionContainer">
         <div class="instructionPage active" data-page="0">
           <p><strong>Objective</strong></p>
-          <p>The goal of the game is to control more territory on the board than your opponent by surrounding empty intersections with your stones.</p>
+          <p>Control more territory on the board than your opponent by surrounding empty intersections with your stones.</p>
           <p><strong>Setup</strong></p>
           <ul>
-            <li><strong>Board:</strong> A 19×19 grid.</li>
+            <li><strong>Board:</strong> 19×19 grid.</li>
             <li><strong>Players:</strong> Two players – Black (plays first) and White.</li>
-            <li><strong>Stones:</strong> Players take turns placing stones on the intersections (not inside squares).</li>
+            <li><strong>Stones:</strong> Placed on intersections (not inside squares).</li>
           </ul>
         </div>
         <div class="instructionPage" data-page="1">
           <p><strong>Game Rules</strong></p>
           <ul>
-            <li>Players take turns placing one stone per turn on an empty intersection.</li>
+            <li>Place one stone per turn on an empty intersection.</li>
             <li>Once placed, stones do not move.</li>
-            <li>A group of connected stones (horizontally or vertically) must have at least one empty adjacent intersection ("liberty").</li>
-            <li>If a group loses all liberties (is completely surrounded by the opponent’s stones), it is captured and removed from the board.</li>
-            <li><strong>Ko Rule:</strong> You cannot make a move that recreates the previous board state. If you try, a fancy message will appear.</li>
-            <li><strong>Suicide Rule:</strong> You cannot place a stone if that move would leave your stone (or group) with no liberties, unless it captures opponent stones. A message will alert you if this happens.</li>
-            <li><strong>Passing Turns:</strong> A player may pass if no beneficial move is available. Two consecutive passes end the game.</li>
+            <li>Connected stones (horizontally/vertically) need at least one adjacent empty intersection ("liberty").</li>
+            <li>If a group loses all liberties, it is captured and removed.</li>
+            <li><strong>Ko Rule:</strong> You cannot play a move that recreates the previous board state. A fancy message will appear if attempted.</li>
+            <li><strong>Suicide Rule:</strong> You cannot play a move that leaves your stone (or group) with no liberties unless it captures opponent stones. A message will alert you.</li>
+            <li><strong>Passing:</strong> Two consecutive passes end the game.</li>
           </ul>
         </div>
         <div class="instructionPage" data-page="2">
           <p><strong>Scoring & Winning</strong></p>
           <ul>
-            <li><strong>Territory Points:</strong> Each empty intersection completely enclosed by your stones counts as a point.</li>
-            <li><strong>Captured Stones:</strong> Each captured enemy stone counts as one point.</li>
-            <li><strong>Komi (White’s Bonus):</strong> White receives an extra 7 points to offset Black's first-move advantage.</li>
+            <li><strong>Territory:</strong> Each empty intersection completely enclosed by your stones scores one point.</li>
+            <li><strong>Captured Stones:</strong> Each captured enemy stone scores one point.</li>
+            <li><strong>Komi (White’s Bonus):</strong> White gets an extra 7 points to balance Black’s first-move advantage.</li>
           </ul>
-          <p>The player with the highest total (territory + captured stones + komi) wins.</p>
+          <p>The player with the highest total wins.</p>
         </div>
       </div>
       <div>
@@ -171,20 +179,20 @@
       <p>Press [M] to return to the Main Menu.</p>
     </div>
     
-    <!-- Canvas -->
+    <!-- Canvas where the game is drawn -->
     <canvas id="goCanvas"></canvas>
     
-    <!-- Bottom Bar with Pass Button and current turn -->
+    <!-- Bottom bar for turn display and pass button -->
     <div id="bottomBar">
       <span id="turnDisplay">Turn: Black</span>
       <button id="passBtn" style="margin-left:auto; margin-right:10px;">Pass</button>
     </div>
     
-    <!-- Illegal Move Message (fancy overlay, not a popup) -->
+    <!-- Illegal Move Message (fancy overlay) -->
     <div id="illegalMessage"></div>
   </div>
   
-  <!-- Logo -->
+  <!-- Logo image (ensure logo.png exists in your repository) -->
   <img id="logo" src="logo.png" alt="Logo">
   
   <script>
@@ -192,31 +200,27 @@
      * Global Variables & Constants
      *******************************/
     const BOARD_SIZE = 19;
-    const CELL_SIZE = 30; // spacing between intersections
-    const MARGIN = CELL_SIZE; // margin around the grid
+    const CELL_SIZE = 30;
+    const MARGIN = CELL_SIZE;
     const BOARD_PIXEL_SIZE = MARGIN * 2 + (BOARD_SIZE - 1) * CELL_SIZE;
-    const KOMI = 7; // bonus for White
+    const KOMI = 7;
     
     let canvas = document.getElementById("goCanvas");
     canvas.width = BOARD_PIXEL_SIZE;
     canvas.height = BOARD_PIXEL_SIZE;
     let ctx = canvas.getContext("2d");
     
-    // Game state variables
-    let board = []; // 2D array (null, 'b', or 'w')
-    let currentPlayer = 'b'; // 'b' or 'w'
-    let prevBoardState = ""; // for ko rule
+    let board = [];
+    let currentPlayer = 'b';
+    let prevBoardState = "";
     let passCount = 0;
     let blackCaptured = 0, whiteCaptured = 0;
     let gameState = "menu"; // "menu", "color_choice", "difficulty_choice", "playing", "instructions", "game_over"
-    let playerColor = null; // chosen by player: 'b' or 'w'
+    let playerColor = null;  // player’s chosen color: 'b' or 'w'
     let difficulty = "easy"; // "easy", "medium", "hard"
     let aiThinking = false;
-    
-    // A lock to prevent rapid multiple moves.
     let moveLock = false;
     
-    // UI Elements
     const menuScreen = document.getElementById("menuScreen");
     const instructionsScreen = document.getElementById("instructionsScreen");
     const colorScreen = document.getElementById("colorScreen");
@@ -226,7 +230,6 @@
     const turnDisplay = document.getElementById("turnDisplay");
     const illegalMessageDiv = document.getElementById("illegalMessage");
     
-    // For instructions pagination
     const instructionPages = document.querySelectorAll(".instructionPage");
     let currentInstrPage = 0;
     
@@ -292,7 +295,7 @@
     /*******************************
      * Move Simulation & Rule Checks
      *******************************/
-    // Returns an object with legal:true/false and a reason if false.
+    // Returns an object { legal: true/false, reason: "ko"/"suicide"/"occupied" if illegal, newBoard, captured }
     function simulateMove(bd, row, col, color) {
       if (bd[row][col] !== null) return { legal: false, reason: "occupied" };
       let newBd = cloneBoard(bd);
@@ -310,11 +313,11 @@
           }
         }
       }
-      // Check the new stone's group.
+    
+      // Check our newly placed stone.
       let { group, liberties } = getGroup(newBd, row, col);
       if (liberties.size === 0 && captured === 0) return { legal: false, reason: "suicide" };
     
-      // Check ko rule.
       let newState = boardToString(newBd);
       if (newState === prevBoardState) return { legal: false, reason: "ko" };
     
@@ -335,7 +338,6 @@
         moveLock = false;
         return;
       }
-      // Save board state for ko.
       prevBoardState = boardToString(board);
       board = result.newBoard;
       if (currentPlayer === 'b') {
@@ -373,11 +375,9 @@
       if (difficulty === "easy") {
         return moves[Math.floor(Math.random() * moves.length)];
       } else if (difficulty === "medium") {
-        // Choose move with maximum captured stones.
         moves.sort((a, b) => b.captured - a.captured);
         return moves[0];
       } else if (difficulty === "hard") {
-        // Evaluate each move: score = captured + liberties of new group.
         let bestScore = -Infinity;
         let bestMove = moves[0];
         for (let move of moves) {
@@ -396,7 +396,7 @@
     }
     
     function aiTurnIfNeeded() {
-      if (playerColor === currentPlayer) return; // player's turn
+      if (playerColor === currentPlayer) return;
       if (aiThinking || moveLock) return;
       aiThinking = true;
       setTimeout(() => {
@@ -404,7 +404,6 @@
         if (move) {
           attemptMove(move.r, move.c);
         } else {
-          // If no legal moves, AI passes.
           passCount++;
           if (passCount >= 2) {
             endGame();
@@ -672,6 +671,7 @@
     
     requestAnimationFrame(mainLoop);
     
+    // Start at the menu.
     showMenu();
   </script>
 </body>
