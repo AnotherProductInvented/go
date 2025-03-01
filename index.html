@@ -16,11 +16,21 @@
       position: relative;
       min-height: 100vh;
     }
-    /* Header */
+    /* Header: one instance only */
     h1 {
       margin: 1rem 0 0.5rem;
       text-align: center;
       line-height: 1.2;
+    }
+    /* Place the live scoreboard outside the board */
+    #scoreBoard {
+      background: rgba(255,255,255,0.8);
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 16px;
+      z-index: 3000;
+      margin-bottom: 10px;
+      display: none;
     }
     /* Game container with scrolling support */
     #gameContainer {
@@ -31,18 +41,6 @@
       max-height: 90vh;
       padding-bottom: 80px;  /* extra space for board & bottom bar */
       margin-bottom: 50px;
-    }
-    /* Live Scoreboard */
-    #scoreBoard {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255,255,255,0.8);
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 16px;
-      z-index: 3000;
-      display: none;
     }
     /* Canvas board */
     canvas {
@@ -82,7 +80,7 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    /* Bottom bar (only during play) */
+    /* Bottom bar: shown only during play */
     #bottomBar {
       position: absolute;
       bottom: 0;
@@ -119,7 +117,7 @@
       display: none;
       z-index: 3000;
     }
-    /* Blue status message for opponent pass */
+    /* Blue status message for opponent passes */
     #statusMessage {
       position: absolute;
       top: 60%;
@@ -136,13 +134,13 @@
   </style>
 </head>
 <body>
-  <!-- Header: "Another Product Invented" then "Go" -->
+  <!-- Header -->
   <h1>Another Product Invented<br>Go</h1>
   
+  <!-- Live Scoreboard placed outside the board -->
+  <div id="scoreBoard"></div>
+  
   <div id="gameContainer">
-    <!-- Live Scoreboard -->
-    <div id="scoreBoard"></div>
-    
     <!-- MENU SCREEN -->
     <div id="menuScreen" class="overlayScreen" style="display: flex;">
       <button id="newGameBtn">New Game</button>
@@ -487,7 +485,7 @@
         if (move) {
           attemptMove(move.r, move.c);
         } else {
-          // AI passes if no legal move.
+          // If AI has no legal move, it passes.
           showStatusMessage("Opponent passed!");
           passCount++;
           if (passCount >= 2) {
@@ -608,7 +606,7 @@
     }
     
     /*******************************
-     * Illegal Move Message Display
+     * Illegal & Status Message Display
      *******************************/
     let illegalTimeout;
     function showIllegalMessage(msg) {
@@ -739,13 +737,13 @@
      *******************************/
     document.getElementById("newGameBtn").onclick = showColorChoice;
     document.getElementById("instructionsBtn").onclick = showInstructions;
-    if(document.getElementById("whiteSideBtn")) {
+    if (document.getElementById("whiteSideBtn")) {
       document.getElementById("whiteSideBtn").onclick = () => {
         playerColor = 'w';
         showDifficultyChoice();
       };
     }
-    if(document.getElementById("blackSideBtn")) {
+    if (document.getElementById("blackSideBtn")) {
       document.getElementById("blackSideBtn").onclick = () => {
         playerColor = 'b';
         showDifficultyChoice();
@@ -779,7 +777,7 @@
       updateScoreBoard();
       if (gameState === "playing") {
         drawBoard();
-        // Only let AI move if it's not the human's turn.
+        // Only let AI move if it's not the human's turn
         if (playerColor !== currentPlayer) {
           aiTurnIfNeeded();
         }
