@@ -14,15 +14,16 @@
       align-items: center;
       position: relative;
     }
-    /* Main header (only once) */
+    /* Main header */
     h1 {
       margin: 1rem 0 0.5rem;
       text-align: center;
       line-height: 1.2;
     }
-    /* Container for canvas & overlays */
+    /* Game container: extra bottom padding to show full board */
     #gameContainer {
       position: relative;
+      padding-bottom: 50px;  /* extra space for bottom bar */
       margin-bottom: 50px;
     }
     /* Canvas board */
@@ -63,7 +64,7 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    /* Bottom bar (only visible during play) */
+    /* Bottom bar only visible during play */
     #bottomBar {
       position: absolute;
       bottom: 0;
@@ -73,7 +74,7 @@
       background: rgba(255,255,255,0.9);
       display: none;
       align-items: center;
-      padding-left: 10px;
+      justify-content: center;
       box-sizing: border-box;
       z-index: 2;
       border-top: 1px solid #ccc;
@@ -103,11 +104,11 @@
   </style>
 </head>
 <body>
-  <!-- Main header -->
+  <!-- Single header: first line "Another Product Invented", second line "Go" -->
   <h1>Another Product Invented<br>Go</h1>
   
   <div id="gameContainer">
-    <!-- MENU SCREEN (no extra UI elements here) -->
+    <!-- MENU SCREEN -->
     <div id="menuScreen" class="overlayScreen" style="display: flex;">
       <button id="newGameBtn">New Game</button>
       <button id="instructionsBtn">Instructions</button>
@@ -182,7 +183,7 @@
     <!-- Canvas for the game -->
     <canvas id="goCanvas"></canvas>
     
-    <!-- Bottom bar (only visible during play) -->
+    <!-- Bottom bar (visible only during play) -->
     <div id="bottomBar">
       <span id="turnDisplay">Turn: Black</span>
       <button id="passBtn" style="margin-left:auto; margin-right:10px;">Pass</button>
@@ -192,7 +193,7 @@
     <div id="illegalMessage"></div>
   </div>
   
-  <!-- Logo (ensure logo.png exists) -->
+  <!-- Logo (ensure logo.png is present) -->
   <img id="logo" src="logo.png" alt="Logo">
   
   <script>
@@ -221,7 +222,6 @@
     let aiThinking = false;
     let moveLock = false;
     
-    // UI elements
     const menuScreen = document.getElementById("menuScreen");
     const instructionsScreen = document.getElementById("instructionsScreen");
     const colorScreen = document.getElementById("colorScreen");
@@ -239,6 +239,7 @@
      *******************************/
     function updateBottomBarVisibility() {
       const bottomBar = document.getElementById("bottomBar");
+      // Only show bottom bar during play
       bottomBar.style.display = (gameState === "playing") ? "flex" : "none";
     }
     
@@ -402,10 +403,16 @@
     }
     
     function aiTurnIfNeeded() {
+      // Only run if it's AI's turn (playerColor !== currentPlayer)
       if (playerColor === currentPlayer) return;
       if (aiThinking || moveLock) return;
       aiThinking = true;
       setTimeout(() => {
+        // Re-check: if player made a move during delay, cancel AI move.
+        if (playerColor === currentPlayer) {
+          aiThinking = false;
+          return;
+        }
         let move = getAIMove();
         if (move) {
           attemptMove(move.r, move.c);
@@ -640,14 +647,18 @@
      *******************************/
     document.getElementById("newGameBtn").onclick = showColorChoice;
     document.getElementById("instructionsBtn").onclick = showInstructions;
-    document.getElementById("whiteSideBtn") && (document.getElementById("whiteSideBtn").onclick = () => {
-      playerColor = 'w';
-      showDifficultyChoice();
-    });
-    document.getElementById("blackSideBtn") && (document.getElementById("blackSideBtn").onclick = () => {
-      playerColor = 'b';
-      showDifficultyChoice();
-    });
+    if(document.getElementById("whiteSideBtn")) {
+      document.getElementById("whiteSideBtn").onclick = () => {
+        playerColor = 'w';
+        showDifficultyChoice();
+      };
+    }
+    if(document.getElementById("blackSideBtn")) {
+      document.getElementById("blackSideBtn").onclick = () => {
+        playerColor = 'b';
+        showDifficultyChoice();
+      };
+    }
     document.getElementById("easyBtn").onclick = () => { difficulty = "easy"; startPlaying(); };
     document.getElementById("mediumBtn").onclick = () => { difficulty = "medium"; startPlaying(); };
     document.getElementById("hardBtn").onclick = () => { difficulty = "hard"; startPlaying(); };
@@ -675,6 +686,7 @@
       updateBottomBarVisibility();
       if (gameState === "playing") {
         drawBoard();
+        // Only let AI move if it's not the player's turn
         if (playerColor !== currentPlayer) {
           aiTurnIfNeeded();
         }
